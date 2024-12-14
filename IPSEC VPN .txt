@@ -1,0 +1,39 @@
+hostname R1  
+! Interface Configuration  
+interface GigabitEthernet0/1  
+ ip address 192.168.1.1 255.255.255.0  
+ no shutdown  
+
+interface GigabitEthernet0/0  
+ ip address 192.168.100.1 255.255.255.0  
+ no shutdown  
+
+! Static Route  
+ip route 0.0.0.0 0.0.0.0 192.168.100.2  
+
+! ISAKMP Policy  
+crypto isakmp policy 10  
+ encryption aes 256  
+ authentication pre-share  
+ group 5  
+
+! Pre-shared Key  
+crypto isakmp key secretkey address 192.168.200.1  
+
+! IPSec Transform Set  
+crypto ipsec transform-set R1-R3 esp-aes 256 esp-sha-hmac  
+
+! Crypto Map  
+crypto map IPSEC-MAP 10 ipsec-isakmp  
+ set peer 192.168.200.1  
+ set pfs group5  
+ set security-association lifetime seconds 86400  
+ set transform-set R1-R3  
+ match address 100  
+
+! Apply Crypto Map to Interface  
+interface GigabitEthernet0/0  
+ crypto map IPSEC-MAP  
+
+! Access Control List  
+access-list 100 permit ip 192.168.1.0 0.0.0.255 192.168.3.0 0.0.0.255  
